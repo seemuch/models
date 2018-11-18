@@ -255,7 +255,7 @@ def run_ncf(_):
         data_preprocessing.make_input_fn(
             ncf_dataset=ncf_dataset, is_training=True)
 
-      if batch_count != num_train_steps:
+      if batch_count != num_train_steps * num_gpus:
         raise ValueError(
             "Step counts do not match. ({} vs. {}) The async process is "
             "producing incorrect shards.".format(batch_count, num_train_steps))
@@ -281,6 +281,36 @@ def run_ncf(_):
       eval_results = eval_estimator.evaluate(eval_input_fn,
                                              steps=num_eval_steps)
       tf.logging.info("Evaluation complete.")
+    
+    elif FLAGS.use_keras:
+      tf.logging.info("Using Keras instead of Estimator")
+      input_fn, _, _ = data_preprocessing.make_input_fn(
+            ncf_dataset=ncf_dataset, is_training=False)
+      (features, labels) = input_fn(params)
+      users = features[movielens.USER_COLUMN]
+      items = tf.cast(features[movielens.ITEM_COLUMN], tf.int32)
+      model = neumf_model.construct_model(users, items, params=params)
+
+      def softmax_crossentropy_with_logits(y_true, y_pred):
+        """A loss function replicating tf's sparse_softmax_cross_entropy
+        Args:
+          y_true: True labels. Tensor of shape [batch_size,]
+          y_pred: Predictions. Tensor of shape [batch_size, num_classes]
+        """
+        return tf.losses.sparse_softmax_cross_entropy(
+            logits=y_pred,
+            labels=tf.reshape(tf.cast(y_true, tf.int64), [-1,]))
+
+      strategy = distribution_utils.get_distribution_strategy(
+        num_gpus=flags_obj.num_gpus)
+      
+      opt = neumf_model.get_optimizer(params)
+
+      model.compile(loss=softmax_crossentropy_with_logits,
+                optimizer=opt,
+                metrics=['accuracy'],
+                distribute=strategy)
+
     else:
       runner.train()
       tf.logging.info("Beginning evaluation.")
