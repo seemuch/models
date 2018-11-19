@@ -289,6 +289,7 @@ def run_ncf(_):
       (features, labels) = input_fn(params)
       users = features[movielens.USER_COLUMN]
       items = tf.cast(features[movielens.ITEM_COLUMN], tf.int32)
+
       model = neumf_model.construct_model(users, items, params=params)
 
       def softmax_crossentropy_with_logits(y_true, y_pred):
@@ -307,18 +308,18 @@ def run_ncf(_):
       opt = neumf_model.get_optimizer(params)
 
       model.compile(loss=softmax_crossentropy_with_logits,
-                optimizer=opt,
-                metrics=['accuracy'],
-                distribute=strategy)
+                    optimizer=opt,
+                    metrics=['accuracy'],
+                    distribute=strategy)
 
       total_examples = 1000210
       steps_per_epoch = total_examples / FLAGS.batch_size
       
       model.fit(input_fn,
-            epochs=FLAGS.train_epochs,
-            steps_per_epoch=steps_per_epoch,
-            callbacks=[time_callback],
-            verbose=0)
+                epochs=FLAGS.train_epochs,
+                steps_per_epoch=steps_per_epoch,
+                callbacks=[],
+                verbose=0)
 
     else:
       runner.train()

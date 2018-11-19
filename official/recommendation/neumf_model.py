@@ -161,6 +161,8 @@ def get_optimizer(params):
       beta2=params["beta2"], epsilon=params["epsilon"])
   if params["use_tpu"]:
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
+  
+  return optimizer
 
 
 def construct_model(users, items, params):
