@@ -284,13 +284,12 @@ def run_ncf(_):
     
     elif FLAGS.use_keras:
       tf.logging.info("Using Keras instead of Estimator")
-      input_fn, _, _ = data_preprocessing.make_input_fn(
-            ncf_dataset=ncf_dataset, is_training=False)
-      (features, labels) = input_fn(params)
-      users = features[movielens.USER_COLUMN]
-      items = tf.cast(features[movielens.ITEM_COLUMN], tf.int32)
 
-      model = neumf_model.construct_model(users, items, params=params)
+      train_input_fn, _, _= \
+        data_preprocessing.make_input_fn(
+            ncf_dataset=ncf_dataset, is_training=True)
+
+      model = neumf_model.construct_model(FLAGS.batch_size)
 
       def softmax_crossentropy_with_logits(y_true, y_pred):
         """A loss function replicating tf's sparse_softmax_cross_entropy
@@ -303,7 +302,7 @@ def run_ncf(_):
             labels=tf.reshape(tf.cast(y_true, tf.int64), [-1,]))
 
       strategy = distribution_utils.get_distribution_strategy(
-        num_gpus=flags_obj.num_gpus)
+          num_gpus=flags_obj.num_gpus)
       
       opt = neumf_model.get_optimizer(params)
 
@@ -315,7 +314,7 @@ def run_ncf(_):
       total_examples = 1000210
       steps_per_epoch = total_examples / FLAGS.batch_size
       
-      model.fit(input_fn,
+      model.fit(train_input_fn,
                 epochs=FLAGS.train_epochs,
                 steps_per_epoch=steps_per_epoch,
                 callbacks=[],

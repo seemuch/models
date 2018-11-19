@@ -165,6 +165,8 @@ def get_optimizer(params):
   return optimizer
 
 
+users = Tensor(batch_size, 1)
+
 def construct_model(users, items, params):
   # type: (tf.Tensor, tf.Tensor, dict) -> tf.Tensor
   """Initialize NeuMF model.
@@ -180,7 +182,31 @@ def construct_model(users, items, params):
   Returns:
     logits:  network logits
   """
+  # Input variables
+  user_input = tf.keras.layers.Input(tensor=users)
+  item_input = tf.keras.layers.Input(tensor=items)
+  return _construct_rest_of_the_model(user_input, item_input, params)
 
+def construct_model(batch_size, params):
+  """Initialize NeuMF model.
+
+  Args:
+    batch_size: batch_size of the inputs
+    params: Dict of hyperparameters.
+
+  Raises:
+    ValueError: if the first model layer is not even.
+
+  Returns:
+    logits:  network logits
+  """
+
+  user_input = tf.keras.layers.Input(shape=(batch_size,))
+  item_input = tf.keras.layers.Input(shape=(batch_size,))
+  return _construct_rest_of_the_model(user_input, item_input, params)
+
+
+def _construct_rest_of_the_model(user_input_layer, item_input_layer, params):
   num_users = params["num_users"]
   num_items = params["num_items"]
 
@@ -198,9 +224,6 @@ def construct_model(users, items, params):
   if model_layers[0] % 2 != 0:
     raise ValueError("The first layer size should be multiple of 2!")
 
-  # Input variables
-  user_input = tf.keras.layers.Input(tensor=users)
-  item_input = tf.keras.layers.Input(tensor=items)
   batch_size = user_input.get_shape()[0]
 
   if params["use_tpu"]:
