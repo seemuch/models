@@ -6,7 +6,7 @@ if [ `id -u` != 0 ]; then
   sudo echo "Success"
 fi
 
-DATASET="ml-20m"
+DATASET="ml-1m"
 
 BUCKET=${BUCKET:-""}
 ROOT_DIR="${BUCKET:-/tmp}/MLPerf_NCF"

@@ -311,6 +311,15 @@ def run_ncf(_):
                 metrics=['accuracy'],
                 distribute=strategy)
 
+      total_examples = 1000210
+      steps_per_epoch = total_examples / FLAGS.batch_size
+      
+      model.fit(input_fn,
+            epochs=FLAGS.train_epochs,
+            steps_per_epoch=steps_per_epoch,
+            callbacks=[time_callback],
+            verbose=0)
+
     else:
       runner.train()
       tf.logging.info("Beginning evaluation.")
