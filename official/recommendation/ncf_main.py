@@ -551,6 +551,10 @@ def define_ncf_flags():
           "--use_estimator=false"
       ))
 
+  flags.DEFINE_bool(
+      name="use_keras", default=None, help=flags_core.help_wrap(
+        "Use keras instead of estimator"))
+
   xla_message = "--use_while_loop requires --use_estimator=false"
   @flags.multi_flags_validator(["use_while_loop", "use_estimator"],
                                message=xla_message)
