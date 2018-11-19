@@ -164,9 +164,6 @@ def get_optimizer(params):
   
   return optimizer
 
-
-users = Tensor(batch_size, 1)
-
 def construct_model(users, items, params):
   # type: (tf.Tensor, tf.Tensor, dict) -> tf.Tensor
   """Initialize NeuMF model.
