@@ -62,8 +62,9 @@ do
   python ncf_main.py --model_dir ${MODEL_DIR} \
                      --data_dir ${DATA_DIR} \
                      --dataset ${DATASET} --hooks "" \
-                     --num_gpus=2 \
-                     --use_keras \
+                     --num_gpus=1 \
+                     --use_keras=true \
+                     --use_estimator=false \
                      --clean \
                      --train_epochs 20 \
                      --batch_size 2048 \

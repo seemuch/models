@@ -281,7 +281,7 @@ def run_ncf(_):
       eval_results = eval_estimator.evaluate(eval_input_fn,
                                              steps=num_eval_steps)
       tf.logging.info("Evaluation complete.")
-    
+
     elif FLAGS.use_keras:
       tf.logging.info("Using Keras instead of Estimator")
 
@@ -289,7 +289,9 @@ def run_ncf(_):
         data_preprocessing.make_input_fn(
             ncf_dataset=ncf_dataset, is_training=True)
 
-      model = neumf_model.construct_model(FLAGS.batch_size)
+      user_input = tf.keras.layers.Input(shape=(FLAGS.batch_size,))
+      item_input = tf.keras.layers.Input(shape=(FLAGS.batch_size,))
+      model = neumf_model.construct_model(user_input, item_input, params)
 
       def softmax_crossentropy_with_logits(y_true, y_pred):
         """A loss function replicating tf's sparse_softmax_cross_entropy
@@ -301,9 +303,8 @@ def run_ncf(_):
             logits=y_pred,
             labels=tf.reshape(tf.cast(y_true, tf.int64), [-1,]))
 
-      strategy = distribution_utils.get_distribution_strategy(
-          num_gpus=flags_obj.num_gpus)
-      
+      strategy = distribution_utils.get_distribution_strategy(1)
+
       opt = neumf_model.get_optimizer(params)
 
       model.compile(loss=softmax_crossentropy_with_logits,
@@ -313,8 +314,12 @@ def run_ncf(_):
 
       total_examples = 1000210
       steps_per_epoch = total_examples / FLAGS.batch_size
-      
-      model.fit(train_input_fn,
+
+      input_dataset = train_input_fn(params)
+
+      tf.logging.info("zhenzheng input: " + str(input_dataset))
+
+      model.fit(input_dataset,
                 epochs=FLAGS.train_epochs,
                 steps_per_epoch=steps_per_epoch,
                 callbacks=[],
